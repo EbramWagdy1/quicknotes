@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickNotes — Privacy Policy & Data Safety</title>
+  <meta name="description" content="Official Privacy Policy and Data Safety disclosures for QuickNotes Android Application.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4F46E5;
+      --primary-light: #6366F1;
+      --primary-subtle: #EEF2FF;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --card-bg: #FFFFFF;
+      --bg-gradient: linear-gradient(180deg, #F8FAFC 0%, #EEF2F6 100%);
+      --badge-green-bg: #DCFCE7;
+      --badge-green-text: #166534;
+      --badge-amber-bg: #FEF3C7;
+      --badge-amber-text: #92400E;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --primary: #818CF8;
+        --primary-light: #A5B4FC;
+        --primary-subtle: #1E1B4B;
+        --text-main: #F8FAFC;
+        --text-muted: #94A3B8;
+        --border: #334155;
+        --card-bg: #1E293B;
+        --bg-gradient: linear-gradient(180deg, #0F172A 0%, #090D16 100%);
+        --badge-green-bg: #064E3B;
+        --badge-green-text: #6EE7B7;
+        --badge-amber-bg: #78350F;
+        --badge-amber-text: #FCD34D;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      line-height: 1.65;
+      padding: 32px 16px 80px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 32px 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+    }
+
+    .app-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--primary-subtle);
+      color: var(--primary);
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 16px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+
+    .meta {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.03);
+    }
+
+    h2 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-top: 18px;
+      margin-bottom: 8px;
+    }
+
+    p {
+      color: var(--text-main);
+      margin-bottom: 14px;
+    }
+
+    ul {
+      list-style-position: inside;
+      margin-left: 8px;
+      margin-bottom: 14px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-right: 6px;
+    }
+
+    .tag-local {
+      background: var(--badge-green-bg);
+      color: var(--badge-green-text);
+    }
+
+    .tag-cloud {
+      background: var(--badge-amber-bg);
+      color: var(--badge-amber-text);
+    }
+
+    .highlight-box {
+      background: var(--primary-subtle);
+      border-left: 4px solid var(--primary);
+      padding: 16px 18px;
+      border-radius: 0 12px 12px 0;
+      margin: 18px 0;
+      font-size: 0.95rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 0.92rem;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      text-align: left;
+    }
+
+    th {
+      background: var(--primary-subtle);
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="app-badge">
+      <span>📱 QuickNotes</span>
+      <span>•</span>
+      <span>com.ebramwagdy.quicknotes</span>
+    </div>
+    <h1>Privacy Policy & Data Safety</h1>
+    <div class="meta">
+      <span><strong>Last Updated:</strong> October 8, 2026</span>
+      <span>•</span>
+      <span><strong>Developer:</strong> Ebram Wagdy</span>
+      <span>•</span>
+      <span><strong>Status:</strong> Google Play Certified</span>
+    </div>
+  </header>
+
+  <!-- Section 1 -->
+  <section class="card">
+    <h2>1. Introduction & Privacy Philosophy</h2>
+    <p>
+      Welcome to <strong>QuickNotes</strong> ("we", "our", or "the App"). QuickNotes is an offline-first, privacy-conscious personal productivity application built for capturing notes, organizing checklists, managing scheduled alarms, and transcribing thoughts.
+    </p>
+    <div class="highlight-box">
+      <strong>Zero Mandatory Registration:</strong> QuickNotes does <em>not</em> require creating an account, email sign-up, or providing any personal identity data to use its core features.
+    </div>
+  </section>
+
+  <!-- Section 2 -->
+  <section class="card">
+    <h2>2. Local-First Storage Architecture</h2>
+    <p>
+      <span class="tag tag-local">Local On-Device</span>
+      All your notes, checklists, subtasks, color tags, audio recordings, and reminder dates are stored exclusively on your device inside an encrypted/sandboxed <strong>SQLite database</strong> (<code>quicknotes.db</code>) and local application storage.
+    </p>
+    <ul>
+      <li><strong>No Proprietary Cloud Servers:</strong> We do not run background servers to harvest, collect, sync, or sell your private notes.</li>
+      <li><strong>Biometric Protection:</strong> If you lock notes with fingerprint or facial recognition, authentication is executed entirely on-device by Android’s hardware <code>BiometricPrompt</code>. No biometric data ever leaves your device's hardware security module.</li>
+    </ul>
+  </section>
+
+  <!-- Section 3 -->
+  <section class="card">
+    <h2>3. Device Permissions & Actual Use Cases</h2>
+    <p>QuickNotes requests only permissions that are strictly necessary to deliver user-initiated actions:</p>
+
+    <h3>📷 Camera (<code>android.permission.CAMERA</code>)</h3>
+    <p>
+      Used strictly when you launch the document scanner to extract text from physical documents, whiteboards, or handwritten notes (OCR). Images are captured only upon explicit user action and are not sent to background surveillance servers.
+    </p>
+
+    <h3>🎙️ Microphone & Audio (<code>android.permission.RECORD_AUDIO</code>)</h3>
+    <p>
+      Used to dictate notes via Android's built-in speech-to-text recognition engine and to record optional voice memos attached to your notes. Audio is recorded only while you actively hold or press the record button.
+    </p>
+
+    <h3>📍 Location (<code>ACCESS_FINE_LOCATION</code>, <code>ACCESS_COARSE_LOCATION</code>)</h3>
+    <p>
+      Optional user-directed geotagging. If you choose to attach a location to a note, coordinates are queried once and saved locally in your database to render pins on the in-app interactive map. Location is <strong>never tracked in the background</strong>.
+    </p>
+
+    <h3>⏰ Exact Alarms & Full-Screen Intent (<code>USE_EXACT_ALARM</code>, <code>USE_FULL_SCREEN_INTENT</code>)</h3>
+    <p>
+      Powers the time-critical reminder and Alarm Clock utility. Exact alarm APIs guarantee reminders ring at the exact minute even when the phone is in Doze/Idle power saving. Full-screen intent displays the incoming ringing screen over the lock screen so you can immediately Snooze or Dismiss active alarms.
+    </p>
+  </section>
+
+  <!-- Section 4 -->
+  <section class="card">
+    <h2>4. Third-Party Services & AI Processing</h2>
+    <p>
+      <span class="tag tag-cloud">External Processing (User-Initiated Only)</span>
+      QuickNotes includes optional intelligent productivity features:
+    </p>
+
+    <h3>Google Gemini Generative AI</h3>
+    <p>
+      If and only if you explicitly click to use AI features (such as <em>"Summarize with AI"</em>, <em>"Suggest Tags"</em>, <em>"Smart Image OCR"</em>, or <em>"Semantic Search"</em>), the specific note content or image is transmitted securely over encrypted <strong>HTTPS</strong> to the Google Gemini API for natural language processing.
+    </p>
+    <ul>
+      <li>Data transmitted is governed by Google’s Cloud and API Privacy Policies.</li>
+      <li>Your note contents are <strong>never sold, rented, or shared with third-party advertisers</strong>.</li>
+      <li>AI features are completely optional; all basic note-taking, checklists, alarms, and local searches function 100% offline without AI.</li>
+    </ul>
+
+    <h3>Map Tile Service</h3>
+    <p>
+      When viewing the interactive notes map, the map renders visual map tiles via public OpenStreetMap tile servers over secure HTTPS. No personal note data is sent to map servers.
+    </p>
+  </section>
+
+  <!-- Section 5 -->
+  <section class="card">
+    <h2>5. Google Play Data Safety Summary</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Data Category</th>
+          <th>Collection Status</th>
+          <th>Storage / Sharing</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Notes & User Content</strong></td>
+          <td>Local</td>
+          <td>Stored on-device SQLite. Sent to Gemini API only if user clicks AI summary/tags.</td>
+          <td>App Functionality</td>
+        </tr>
+        <tr>
+          <td><strong>Location</strong></td>
+          <td>Optional</td>
+          <td>Stored locally on-device. Never tracked in background.</td>
+          <td>Note Geotagging</td>
+        </tr>
+        <tr>
+          <td><strong>Photos (Camera)</strong></td>
+          <td>Optional</td>
+          <td>Processed for OCR text extraction upon user capture.</td>
+          <td>Document Scanner</td>
+        </tr>
+        <tr>
+          <td><strong>Audio (Microphone)</strong></td>
+          <td>Optional</td>
+          <td>Processed via system speech recognition upon user recording.</td>
+          <td>Voice Notes</td>
+        </tr>
+        <tr>
+          <td><strong>Identifiers / Ads</strong></td>
+          <td>None</td>
+          <td>No advertising IDs or tracking SDKs.</td>
+          <td>N/A</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Section 6 -->
+  <section class="card">
+    <h2>6. Data Control, Retention, and Permanent Deletion</h2>
+    <p>You retain full sovereign control over all data created in QuickNotes:</p>
+    <ul>
+      <li><strong>Delete Individual Items:</strong> You can delete or move any note or task to Trash at any moment.</li>
+      <li><strong>"Delete All Notes":</strong> An in-app one-click option completely purges all notes, attachments, and subtasks from the local database.</li>
+      <li><strong>App Uninstall:</strong> Uninstalling QuickNotes immediately and permanently purges all local databases, preferences, and caches from your device.</li>
+    </ul>
+  </section>
+
+  <!-- Section 7 -->
+  <section class="card">
+    <h2>7. Developer Contact</h2>
+    <p>For questions or feedback regarding this privacy policy or the app, please reach out directly:</p>
+    <p>
+      • <strong>Developer:</strong> Ebram Wagdy<br>
+      • <strong>Email:</strong> <a href="mailto:wagdyebram78@gmail.com">wagdyebram78@gmail.com</a><br>
+      • <strong>Project Repository:</strong> <a href="https://github.com/ebramwagdy1/quicknotes" target="_blank" rel="noopener">github.com/ebramwagdy1/quicknotes</a>
+    </p>
+  </section>
+
+  <footer>
+    <p>© 2026 QuickNotes by Ebram Wagdy. All rights reserved.</p>
+  </footer>
+</div>
+
+</body>
+</html>
