@@ -78,7 +78,7 @@ void main() {
       // Displays summary text
       expect(find.text('هذا ملخص تجريبي للملاحظة تم إنشاؤه بالذكاء الاصطناعي'), findsOneWidget);
       // Displays modern footer
-      expect(find.text('مدعوم بواسطة Google Gemini AI'), findsOneWidget);
+      expect(find.text('مدعوم بواسطة Groq AI ⚡'), findsOneWidget);
     });
 
     testWidgets('displays friendly Arabic error when Gemini fails with 404/unavailable and retries',

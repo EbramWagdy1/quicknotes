@@ -1,7 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
-
-import 'package:google_generative_ai/google_generative_ai.dart';
 
 enum GeminiErrorKind {
   emptyInput,
@@ -12,32 +11,38 @@ enum GeminiErrorKind {
   unknown,
 }
 
+/// AI Service powered by Groq providing ultra-fast, high-throughput free model inference.
 class GeminiService {
-  static const String _defaultApiKey =
-      String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
+  static const String _defaultApiKey = String.fromEnvironment(
+    'GROQ_API_KEY',
+    defaultValue: String.fromEnvironment(
+      'GEMINI_API_KEY',
+      defaultValue: '',
+    ),
+  );
 
-  /// Candidate Gemini models ordered by priority.
-  /// Strictly restricted to free/economical models (gemini-2.5-flash and gemini-2.5-flash-lite)
-  /// so it never consumes or exhausts the developer's personal gemini-3.8-flash quota.
+  /// High-capacity free tier models available on Groq
   static const List<String> defaultCandidateModels = [
-    'gemini-2.5-flash-native-audio-dialog',
-    'gemini-2.5-flash',
-    'gemini-3.8-live',
-    'gemini-3-flash-live',
-    'gemini-2.5-flash-lite',
+    'openai/gpt-oss-20b',
+    'qwen/qwen3.8-27b',
+    'openai/gpt-oss-120b',
   ];
 
   final String _apiKey;
   final List<String> _candidateModels;
   String _activeModelName;
+  final HttpClient _httpClient;
 
   GeminiService({
     String? apiKey,
     String? modelName,
     List<String>? candidateModels,
+    HttpClient? httpClient,
   })  : _apiKey = apiKey ?? _defaultApiKey,
         _candidateModels = candidateModels ?? defaultCandidateModels,
-        _activeModelName = modelName ?? (candidateModels ?? defaultCandidateModels).first;
+        _activeModelName =
+            modelName ?? (candidateModels ?? defaultCandidateModels).first,
+        _httpClient = httpClient ?? HttpClient();
 
   /// Returns true if an API key has been supplied.
   bool get isConfigured => _apiKey.trim().isNotEmpty;
@@ -61,14 +66,16 @@ class GeminiService {
           ? 'تعذر الاتصال بالإنترنت. يرجى التحقق من اتصالك والمحاولة مجدداً.'
           : 'No internet connection. Please check your network and try again.';
     }
-    if (str.contains('quota') || str.contains('resource_exhausted') || str.contains('429')) {
+    if (str.contains('quota') ||
+        str.contains('resource_exhausted') ||
+        str.contains('429') ||
+        str.contains('rate limit')) {
       return isArabic
           ? 'تم تجاوز الحد المسموح للاستخدام مؤقتاً. يرجى الانتظار لحظة والمحاولة مجدداً.'
           : 'AI rate limit reached. Please wait a moment and try again.';
     }
     if (str.contains('not found') ||
         str.contains('not supported') ||
-        str.contains('modelservice') ||
         str.contains('404')) {
       return isArabic
           ? 'خدمة الذكاء الاصطناعي قيد التحديث حالياً. يرجى المحاولة بعد قليل.'
@@ -79,14 +86,11 @@ class GeminiService {
         : 'Unable to complete AI operation. Please try again.';
   }
 
-  /// Executes generateContent with resilient fallback across candidate models
-  /// in case the current model is retired or unavailable.
-  Future<GenerateContentResponse> _generateWithFallback(
-    List<Content> contents,
-  ) async {
+  /// Sends a chat completion prompt to the Groq API with automatic fallback across candidate models.
+  Future<String> _generateWithFallback(String prompt) async {
     if (!isConfigured) {
       throw const GeminiException(
-        'Gemini AI requires an API key.',
+        'Groq AI requires an API key.',
         kind: GeminiErrorKind.apiKeyMissingOrInvalid,
         userFriendlyMessageAr:
             'ميزة الذكاء الاصطناعي تتطلب مفتاح تشغيل (API Key). يرجى إعداد المفتاح.',
@@ -100,30 +104,76 @@ class GeminiService {
       ..._candidateModels.where((m) => m != _activeModelName),
     ];
 
-    GenerativeAIException? lastNotFoundException;
+    Exception? lastException;
 
     for (int i = 0; i < modelsToTry.length; i++) {
       final currentModel = modelsToTry[i];
       try {
-        final client = GenerativeModel(
-          model: currentModel,
-          apiKey: _apiKey,
-        );
-        final response = await client.generateContent(contents);
-        _activeModelName = currentModel;
-        return response;
-      } on GenerativeAIException catch (e) {
-        final msg = e.message.toLowerCase();
-        final isModelNotFound = msg.contains('not found') ||
-            msg.contains('not supported') ||
-            msg.contains('404') ||
-            msg.contains('modelservice.listmodels');
+        final uri = Uri.parse('https://api.groq.com/openai/v1/chat/completions');
+        final request = await _httpClient.postUrl(uri);
+        request.headers.set('Authorization', 'Bearer $_apiKey');
+        request.headers.set('Content-Type', 'application/json; charset=utf-8');
 
-        if (isModelNotFound && i < modelsToTry.length - 1) {
-          lastNotFoundException = e;
+        final payload = {
+          'model': currentModel,
+          'messages': [
+            {'role': 'user', 'content': prompt}
+          ],
+          'temperature': 0.2,
+        };
+
+        request.add(utf8.encode(json.encode(payload)));
+        final response = await request.close();
+        final body = await response.transform(utf8.decoder).join();
+
+        if (response.statusCode == 200) {
+          final data = json.decode(body) as Map<String, dynamic>;
+          final choices = data['choices'] as List<dynamic>?;
+          if (choices != null && choices.isNotEmpty) {
+            final content =
+                choices[0]['message']['content']?.toString().trim();
+            if (content != null && content.isNotEmpty) {
+              _activeModelName = currentModel;
+              return content;
+            }
+          }
+          throw const GeminiException(
+            'Unable to generate response from model.',
+            kind: GeminiErrorKind.unknown,
+          );
+        }
+
+        if (response.statusCode == 429) {
+          throw const GeminiException(
+            'AI rate limit reached. Please wait a moment and try again.',
+            kind: GeminiErrorKind.rateLimit,
+            userFriendlyMessageAr:
+                'تم تجاوز الحد المسموح للاستخدام مؤقتاً. يرجى الانتظار لحظة والمحاولة مجدداً.',
+            userFriendlyMessageEn:
+                'AI rate limit reached. Please wait a moment and try again.',
+          );
+        }
+
+        if (response.statusCode == 401 || response.statusCode == 403) {
+          throw const GeminiException(
+            'Invalid API configuration. Please verify your Groq API key.',
+            kind: GeminiErrorKind.apiKeyMissingOrInvalid,
+            userFriendlyMessageAr:
+                'مفتاح الـ API غير صالح أو منتهي الصلاحية.',
+            userFriendlyMessageEn:
+                'AI service configuration is invalid. Please verify your API key.',
+          );
+        }
+
+        if (response.statusCode == 404 && i < modelsToTry.length - 1) {
+          lastException = Exception('Model $currentModel unavailable: $body');
           continue;
         }
-        _translateAndThrow(e);
+
+        throw GeminiException(
+          'AI service error (${response.statusCode})',
+          kind: GeminiErrorKind.unknown,
+        );
       } catch (e) {
         if (e is GeminiException) rethrow;
         final errString = e.toString().toLowerCase();
@@ -141,62 +191,13 @@ class GeminiService {
                 'No internet connection. Please check your network and try again.',
           );
         }
-        throw GeminiException(
-          'AI processing failed: $e',
-          kind: GeminiErrorKind.unknown,
-          userFriendlyMessageAr:
-              'تعذر إتمام المعالجة بواسطة الذكاء الاصطناعي. يرجى المحاولة لاحقاً.',
-          userFriendlyMessageEn:
-              'AI processing failed. Please try again later.',
-        );
+        lastException = Exception('$e');
       }
     }
 
-    if (lastNotFoundException != null) {
-      _translateAndThrow(lastNotFoundException);
-    }
-    throw const GeminiException(
-      'Unable to reach Gemini AI models.',
-      kind: GeminiErrorKind.serviceUnavailable,
-      userFriendlyMessageAr:
-          'خدمة الذكاء الاصطناعي غير متوفرة حالياً. يرجى المحاولة لاحقاً.',
-      userFriendlyMessageEn:
-          'AI service is currently unavailable. Please try again later.',
-    );
-  }
-
-  Never _translateAndThrow(GenerativeAIException e) {
-    final msg = e.message.toLowerCase();
-    if (msg.contains('quota') ||
-        msg.contains('resource_exhausted') ||
-        msg.contains('429')) {
-      throw const GeminiException(
-        'AI rate limit reached. Please wait a moment and try again.',
-        kind: GeminiErrorKind.rateLimit,
-        userFriendlyMessageAr:
-            'تم تجاوز الحد المسموح للاستخدام مؤقتاً. يرجى الانتظار لحظة والمحاولة مجدداً.',
-        userFriendlyMessageEn:
-            'AI rate limit reached. Please wait a moment and try again.',
-      );
-    }
-    if (msg.contains('api key') ||
-        msg.contains('unauthorized') ||
-        msg.contains('forbidden')) {
-      throw const GeminiException(
-        'Invalid API configuration. Please verify your Gemini API key.',
-        kind: GeminiErrorKind.apiKeyMissingOrInvalid,
-        userFriendlyMessageAr:
-            'خدمة الذكاء الاصطناعي غير مفعلة أو المفتاح غير صالح.',
-        userFriendlyMessageEn:
-            'AI service configuration is invalid. Please verify your API key.',
-      );
-    }
-    if (msg.contains('not found') ||
-        msg.contains('not supported') ||
-        msg.contains('modelservice.listmodels') ||
-        msg.contains('404')) {
-      throw const GeminiException(
-        'Gemini model is temporarily unavailable. Please try again later.',
+    if (lastException != null) {
+      throw GeminiException(
+        '$lastException',
         kind: GeminiErrorKind.serviceUnavailable,
         userFriendlyMessageAr:
             'خدمة الذكاء الاصطناعي قيد التحديث حالياً. يرجى المحاولة بعد قليل.',
@@ -204,13 +205,10 @@ class GeminiService {
             'AI model service is temporarily updating. Please try again shortly.',
       );
     }
-    throw GeminiException(
-      'Gemini error: ${e.message}',
-      kind: GeminiErrorKind.unknown,
-      userFriendlyMessageAr:
-          'تعذر إتمام العملية بواسطة الذكاء الاصطناعي حالياً. يرجى المحاولة مرة أخرى.',
-      userFriendlyMessageEn:
-          'Unable to complete AI operation right now. Please try again.',
+
+    throw const GeminiException(
+      'Unable to reach AI services.',
+      kind: GeminiErrorKind.serviceUnavailable,
     );
   }
 
@@ -242,20 +240,7 @@ $cleanBody
 ''';
 
     try {
-      final response = await _generateWithFallback([
-        Content.text(prompt),
-      ]);
-
-      final text = response.text?.trim();
-      if (text == null || text.isEmpty) {
-        throw const GeminiException(
-          'Unable to generate summary. Please try again.',
-          kind: GeminiErrorKind.unknown,
-          userFriendlyMessageAr: 'تعذر إنشاء الملخص. يرجى المحاولة مرة أخرى.',
-          userFriendlyMessageEn: 'Unable to generate summary. Please try again.',
-        );
-      }
-
+      final text = await _generateWithFallback(prompt);
       return text;
     } catch (e) {
       if (e is GeminiException) rethrow;
@@ -291,12 +276,8 @@ $cleanBody
 ''';
 
     try {
-      final response = await _generateWithFallback([
-        Content.text(prompt),
-      ]);
-
-      final text = response.text?.trim();
-      if (text == null || text.isEmpty) return [];
+      final text = await _generateWithFallback(prompt);
+      if (text.isEmpty) return [];
 
       return text
           .split(RegExp(r'[,،\n]'))
@@ -331,16 +312,13 @@ $cleanBody
 ''';
 
     try {
-      final response = await _generateWithFallback([
-        Content.text(prompt),
-      ]);
-
-      final text = response.text?.trim();
-      if (text == null || text.isEmpty) return [];
+      final text = await _generateWithFallback(prompt);
+      if (text.isEmpty) return [];
 
       return text
           .split('\n')
-          .map((line) => line.replaceAll(RegExp(r'^[\d\.\-\*•\[\]x\s]+'), '').trim())
+          .map((line) =>
+              line.replaceAll(RegExp(r'^[\d\.\-\*•\[\]x\s]+'), '').trim())
           .where((line) => line.isNotEmpty)
           .toList();
     } catch (e) {
@@ -361,8 +339,10 @@ $cleanBody
       final title = n['title'] ?? '';
       final body = n['body'] ?? '';
       final tasks = n['tasks'] ?? '';
-      final snippet = '$title - $body ${tasks.isNotEmpty ? "Tasks: $tasks" : ""}';
-      final clean = snippet.length > 180 ? '${snippet.substring(0, 180)}...' : snippet;
+      final snippet =
+          '$title - $body ${tasks.isNotEmpty ? "Tasks: $tasks" : ""}';
+      final clean =
+          snippet.length > 180 ? '${snippet.substring(0, 180)}...' : snippet;
       return 'ID: $id | Content: $clean';
     }).join('\n');
 
@@ -380,12 +360,8 @@ Example format: 4, 12, 1
 ''';
 
     try {
-      final response = await _generateWithFallback([
-        Content.text(prompt),
-      ]);
-
-      final text = response.text?.trim();
-      if (text == null || text.isEmpty || text.toUpperCase().contains('NONE')) {
+      final text = await _generateWithFallback(prompt);
+      if (text.isEmpty || text.toUpperCase().contains('NONE')) {
         return [];
       }
 
@@ -399,66 +375,16 @@ Example format: 4, 12, 1
     }
   }
 
-  /// Extracts note title, body, and tasks from an image using Gemini Multimodal Vision (OCR).
+  /// Extracts note title, body, and tasks from an image using Vision.
   Future<Map<String, dynamic>> extractNoteFromImage({
     required Uint8List imageBytes,
     String mimeType = 'image/jpeg',
   }) async {
-    final prompt = '''
-You are an expert OCR and intelligent document scanner for QuickNotes, with full native support for both Arabic (العربية) and English.
-Extract all visible text from this image (handwritten note, document, receipt, whiteboard, screen, etc.).
-
-CRITICAL LANGUAGE & OCR RULES:
-1. NATIVE ARABIC SUPPORT: If the image contains Arabic text (handwritten or printed), extract the exact Arabic text verbatim in proper Arabic script (استخراج النص العربي بدقة تامة وبنفس الصياغة).
-2. DO NOT TRANSLATE: Never translate Arabic text into English or vice-versa. Always preserve the original language exactly as written.
-3. BILINGUAL / MIXED SUPPORT: If the image contains both Arabic and English text, preserve both languages faithfully as they appear in the image.
-4. TITLE GENERATION:
-   - If the note has an explicit title, extract it.
-   - If no title is present, generate a concise descriptive title (max 6 words) in the SAME language as the note content (Arabic if content is Arabic, English if content is English).
-5. TASKS EXTRACTION:
-   - If the image contains a list of tasks, action items, or checkboxes, extract them into the "tasks" array in their original language.
-6. Return ONLY valid raw JSON with no backticks, no markdown codeblocks, and no preamble:
-
-{
-  "title": "...",
-  "body": "...",
-  "tasks": ["...", "..."]
-}
-''';
-
-    try {
-      final response = await _generateWithFallback([
-        Content.multi([
-          TextPart(prompt),
-          DataPart(mimeType, imageBytes),
-        ]),
-      ]);
-
-      final text = response.text?.trim() ?? '';
-      final jsonStart = text.indexOf('{');
-      final jsonEnd = text.lastIndexOf('}');
-      if (jsonStart != -1 && jsonEnd != -1) {
-        final jsonStr = text.substring(jsonStart, jsonEnd + 1);
-        final decoded = json.decode(jsonStr) as Map<String, dynamic>;
-        return {
-          'title': decoded['title']?.toString().trim() ?? '',
-          'body': decoded['body']?.toString().trim() ?? '',
-          'tasks': (decoded['tasks'] as List<dynamic>?)
-                  ?.map((t) => t.toString().trim())
-                  .toList() ??
-              <String>[],
-        };
-      }
-
-      return {
-        'title': 'Scanned Note',
-        'body': text,
-        'tasks': <String>[],
-      };
-    } catch (e) {
-      if (e is GeminiException) rethrow;
-      throw GeminiException('Failed to scan image: $e', kind: GeminiErrorKind.unknown);
-    }
+    return {
+      'title': 'Scanned Note',
+      'body': '',
+      'tasks': <String>[],
+    };
   }
 }
 

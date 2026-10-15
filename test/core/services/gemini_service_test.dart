@@ -50,21 +50,20 @@ void main() {
       );
     });
 
-    test('defaults to gemini-2.5-flash and exposes defaultCandidateModels', () {
+    test('defaults to openai/gpt-oss-20b and exposes defaultCandidateModels', () {
       final service = GeminiService(apiKey: 'dummy_key');
-      expect(service.activeModelName, 'gemini-2.5-flash');
-      expect(GeminiService.defaultCandidateModels, contains('gemini-2.5-flash'));
-      expect(GeminiService.defaultCandidateModels, contains('gemini-2.5-flash-lite'));
-      expect(GeminiService.defaultCandidateModels, isNot(contains('gemini-3.8-flash')));
+      expect(service.activeModelName, 'openai/gpt-oss-20b');
+      expect(GeminiService.defaultCandidateModels, contains('openai/gpt-oss-20b'));
+      expect(GeminiService.defaultCandidateModels, contains('qwen/qwen3.8-27b'));
     });
 
     test('respects custom candidate models and custom initial model', () {
       final service = GeminiService(
         apiKey: 'dummy_key',
-        modelName: 'gemini-3.8-flash',
-        candidateModels: ['gemini-3.8-flash', 'gemini-2.5-flash'],
+        modelName: 'qwen/qwen3.8-27b',
+        candidateModels: ['qwen/qwen3.8-27b', 'openai/gpt-oss-20b'],
       );
-      expect(service.activeModelName, 'gemini-3.8-flash');
+      expect(service.activeModelName, 'qwen/qwen3.8-27b');
     });
 
     test('GeminiException localizedMessage outputs clean messages for Arabic & English', () {

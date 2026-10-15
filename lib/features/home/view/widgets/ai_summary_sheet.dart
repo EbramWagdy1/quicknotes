@@ -271,8 +271,8 @@ class _AiSummarySheetState extends State<AiSummarySheet> {
                               children: [
                                 Text(
                                   context.isArabic
-                                      ? 'مدعوم بواسطة Google Gemini AI'
-                                      : 'Powered by Google Gemini AI',
+                                      ? 'مدعوم بواسطة Groq AI ⚡'
+                                      : 'Powered by Groq AI ⚡',
                                   style: TextStyle(
                                     fontFamily: AppTextStyle.fontFamily,
                                     fontSize: 12,
