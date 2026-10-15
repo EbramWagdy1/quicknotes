@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum GeminiErrorKind {
   emptyInput,
   rateLimit,
+  monthlyLimitExceeded,
   apiKeyMissingOrInvalid,
   network,
   serviceUnavailable,
@@ -28,27 +30,114 @@ class GeminiService {
     'openai/gpt-oss-120b',
   ];
 
+  /// SharedPreferences key for the active month (format: YYYY-MM)
+  static const String keyAiQuotaMonth = 'ai_quota_month';
+
+  /// SharedPreferences key for consumed AI requests within the active month
+  static const String keyAiQuotaUsed = 'ai_quota_used_count';
+
+  /// Default maximum AI requests per user per calendar month
+  static const int defaultMonthlyQuota = 50;
+
   final String _apiKey;
   final List<String> _candidateModels;
   String _activeModelName;
   final HttpClient _httpClient;
+  final SharedPreferences? prefs;
+  final int _monthlyQuota;
 
   GeminiService({
     String? apiKey,
     String? modelName,
     List<String>? candidateModels,
     HttpClient? httpClient,
+    this.prefs,
+    int? monthlyQuota,
   })  : _apiKey = apiKey ?? _defaultApiKey,
         _candidateModels = candidateModels ?? defaultCandidateModels,
         _activeModelName =
             modelName ?? (candidateModels ?? defaultCandidateModels).first,
-        _httpClient = httpClient ?? HttpClient();
+        _httpClient = httpClient ?? HttpClient(),
+        _monthlyQuota = monthlyQuota ??
+            int.tryParse(const String.fromEnvironment('AI_MONTHLY_QUOTA')) ??
+            defaultMonthlyQuota;
 
   /// Returns true if an API key has been supplied.
   bool get isConfigured => _apiKey.trim().isNotEmpty;
 
   /// Returns the current active model identifier.
   String get activeModelName => _activeModelName;
+
+  /// Maximum AI requests allowed per month for this user.
+  int get monthlyQuota => _monthlyQuota;
+
+  /// Formats a DateTime into a `yyyy-MM` key representation.
+  static String formatMonthKey(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}';
+
+  /// Returns the number of AI requests used in the current calendar month.
+  int getUsedMonthlyQuota({DateTime? now}) {
+    final p = prefs;
+    if (p == null) return 0;
+    final currentMonth = formatMonthKey(now ?? DateTime.now());
+    final storedMonth = p.getString(keyAiQuotaMonth);
+    if (storedMonth != currentMonth) {
+      return 0;
+    }
+    return p.getInt(keyAiQuotaUsed) ?? 0;
+  }
+
+  /// Returns the number of AI requests remaining for the current calendar month.
+  int getRemainingMonthlyQuota({DateTime? now}) {
+    final remaining = _monthlyQuota - getUsedMonthlyQuota(now: now);
+    return remaining < 0 ? 0 : remaining;
+  }
+
+  /// Checks if the monthly quota has been reached, automatically rolling over
+  /// to 0 when entering a new calendar month.
+  void checkMonthlyQuota({DateTime? now}) {
+    final p = prefs;
+    if (p == null) return;
+
+    final currentMonth = formatMonthKey(now ?? DateTime.now());
+    final storedMonth = p.getString(keyAiQuotaMonth);
+
+    // Reset usage counter when a new calendar month starts
+    if (storedMonth != currentMonth) {
+      p.setString(keyAiQuotaMonth, currentMonth);
+      p.setInt(keyAiQuotaUsed, 0);
+      return;
+    }
+
+    final used = p.getInt(keyAiQuotaUsed) ?? 0;
+    if (used >= _monthlyQuota) {
+      throw GeminiException(
+        'Monthly AI request limit reached ($used/$_monthlyQuota). Resets next month.',
+        kind: GeminiErrorKind.monthlyLimitExceeded,
+        userFriendlyMessageAr:
+            'تم استهلاك رصيدك الشهري من الذكاء الاصطناعي ($_monthlyQuota طلب شهرياً). سيتم تجديد رصيدك تلقائياً مع بداية الشهر القادم.',
+        userFriendlyMessageEn:
+            'You have reached your monthly AI limit ($_monthlyQuota requests/month). Your quota will reset at the start of next month.',
+      );
+    }
+  }
+
+  /// Records one consumed request in the current month after a successful API response.
+  Future<void> recordSuccessfulRequest({DateTime? now}) async {
+    final p = prefs;
+    if (p == null) return;
+
+    final currentMonth = formatMonthKey(now ?? DateTime.now());
+    final storedMonth = p.getString(keyAiQuotaMonth);
+
+    if (storedMonth != currentMonth) {
+      await p.setString(keyAiQuotaMonth, currentMonth);
+      await p.setInt(keyAiQuotaUsed, 1);
+    } else {
+      final used = p.getInt(keyAiQuotaUsed) ?? 0;
+      await p.setInt(keyAiQuotaUsed, used + 1);
+    }
+  }
 
   /// Converts any caught error into a friendly, human-readable message tailored
   /// to the user's language without leaking raw API details or stack traces.
@@ -65,6 +154,13 @@ class GeminiService {
       return isArabic
           ? 'تعذر الاتصال بالإنترنت. يرجى التحقق من اتصالك والمحاولة مجدداً.'
           : 'No internet connection. Please check your network and try again.';
+    }
+    if (str.contains('monthly') ||
+        str.contains('شهري') ||
+        str.contains('quota reached')) {
+      return isArabic
+          ? 'تم استهلاك رصيدك الشهري من الذكاء الاصطناعي. سيتم تجديد الرصيد تلقائياً مع بداية الشهر القادم.'
+          : 'You have reached your monthly AI limit. Your quota will reset at the start of next month.';
     }
     if (str.contains('quota') ||
         str.contains('resource_exhausted') ||
@@ -98,6 +194,9 @@ class GeminiService {
             'AI features require an API key to operate. Please configure your key.',
       );
     }
+
+    // Verify user has remaining monthly AI quota before sending request
+    checkMonthlyQuota();
 
     final modelsToTry = [
       _activeModelName,
@@ -134,6 +233,7 @@ class GeminiService {
                 choices[0]['message']['content']?.toString().trim();
             if (content != null && content.isNotEmpty) {
               _activeModelName = currentModel;
+              await recordSuccessfulRequest();
               return content;
             }
           }
@@ -416,6 +516,8 @@ class GeminiException implements Exception {
         return 'محتوى الملاحظة فارغ. يرجى إضافة نص أولاً.';
       case GeminiErrorKind.rateLimit:
         return 'تم تجاوز الحد المسموح للاستخدام مؤقتاً. يرجى الانتظار لحظة والمحاولة مجدداً.';
+      case GeminiErrorKind.monthlyLimitExceeded:
+        return 'تم استهلاك رصيدك الشهري من الذكاء الاصطناعي. سيتم تجديد الرصيد تلقائياً مع بداية الشهر القادم.';
       case GeminiErrorKind.apiKeyMissingOrInvalid:
         return 'خدمة الذكاء الاصطناعي غير مفعلة أو المفتاح غير صالح.';
       case GeminiErrorKind.network:
@@ -433,6 +535,8 @@ class GeminiException implements Exception {
         return 'Note content is empty. Please add some text first.';
       case GeminiErrorKind.rateLimit:
         return 'AI rate limit reached. Please wait a moment and try again.';
+      case GeminiErrorKind.monthlyLimitExceeded:
+        return 'You have reached your monthly AI limit. Your quota will reset at the start of next month.';
       case GeminiErrorKind.apiKeyMissingOrInvalid:
         return 'AI service configuration is invalid. Please verify your API key.';
       case GeminiErrorKind.network:

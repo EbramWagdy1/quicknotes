@@ -11,6 +11,15 @@ class MockGeminiService extends Fake implements GeminiService {
   int callCount = 0;
 
   @override
+  int get monthlyQuota => 50;
+
+  @override
+  int getRemainingMonthlyQuota({DateTime? now}) => 48;
+
+  @override
+  int getUsedMonthlyQuota({DateTime? now}) => 2;
+
+  @override
   Future<String> summarizeNote({
     required String title,
     required String body,

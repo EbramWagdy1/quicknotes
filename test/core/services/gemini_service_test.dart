@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:quicknotes/core/services/gemini_service.dart';
 
 void main() {
@@ -137,6 +138,121 @@ void main() {
 
       expect(arMsg, contains('تعذر إتمام العملية'));
       expect(enMsg, contains('Unable to complete AI operation'));
+    });
+
+    group('Monthly AI Quota Limitation & Automatic Rollover', () {
+      test('defaults to 50 requests and handles null prefs gracefully', () {
+        final service = GeminiService(apiKey: 'dummy_key');
+        expect(service.monthlyQuota, equals(50));
+        expect(service.getUsedMonthlyQuota(), equals(0));
+        expect(service.getRemainingMonthlyQuota(), equals(50));
+        // checkMonthlyQuota should not throw when prefs is null
+        expect(() => service.checkMonthlyQuota(), returnsNormally);
+      });
+
+      test('custom quota is respected', () {
+        final service = GeminiService(apiKey: 'dummy_key', monthlyQuota: 20);
+        expect(service.monthlyQuota, equals(20));
+        expect(service.getRemainingMonthlyQuota(), equals(20));
+      });
+
+      test('tracks usage and decrements remaining quota on success', () async {
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        final now = DateTime(2026, 10, 15);
+
+        final service = GeminiService(
+          apiKey: 'dummy_key',
+          prefs: prefs,
+          monthlyQuota: 3,
+        );
+
+        expect(service.getUsedMonthlyQuota(now: now), equals(0));
+        expect(service.getRemainingMonthlyQuota(now: now), equals(3));
+
+        // First successful request
+        await service.recordSuccessfulRequest(now: now);
+        expect(service.getUsedMonthlyQuota(now: now), equals(1));
+        expect(service.getRemainingMonthlyQuota(now: now), equals(2));
+
+        // Second successful request
+        await service.recordSuccessfulRequest(now: now);
+        expect(service.getUsedMonthlyQuota(now: now), equals(2));
+        expect(service.getRemainingMonthlyQuota(now: now), equals(1));
+
+        // Third successful request (consumes all quota)
+        await service.recordSuccessfulRequest(now: now);
+        expect(service.getUsedMonthlyQuota(now: now), equals(3));
+        expect(service.getRemainingMonthlyQuota(now: now), equals(0));
+      });
+
+      test('throws GeminiException with monthlyLimitExceeded when quota is reached', () async {
+        SharedPreferences.setMockInitialValues({
+          GeminiService.keyAiQuotaMonth: '2026-10',
+          GeminiService.keyAiQuotaUsed: 5,
+        });
+        final prefs = await SharedPreferences.getInstance();
+        final now = DateTime(2026, 10, 20);
+
+        final service = GeminiService(
+          apiKey: 'dummy_key',
+          prefs: prefs,
+          monthlyQuota: 5,
+        );
+
+        expect(
+          () => service.checkMonthlyQuota(now: now),
+          throwsA(isA<GeminiException>().having(
+            (e) => e.kind,
+            'kind',
+            equals(GeminiErrorKind.monthlyLimitExceeded),
+          )),
+        );
+
+        // Verify friendly message
+        try {
+          service.checkMonthlyQuota(now: now);
+        } catch (e) {
+          expect(e, isA<GeminiException>());
+          final geminiEx = e as GeminiException;
+          expect(geminiEx.localizedMessage(true), contains('تم استهلاك رصيدك الشهري'));
+          expect(geminiEx.localizedMessage(false), contains('monthly AI limit'));
+        }
+      });
+
+      test('automatically rolls over and resets usage counter on a new month', () async {
+        // Oct 2026: User consumed all 5 requests
+        SharedPreferences.setMockInitialValues({
+          GeminiService.keyAiQuotaMonth: '2026-10',
+          GeminiService.keyAiQuotaUsed: 5,
+        });
+        final prefs = await SharedPreferences.getInstance();
+
+        final service = GeminiService(
+          apiKey: 'dummy_key',
+          prefs: prefs,
+          monthlyQuota: 5,
+        );
+
+        final octDate = DateTime(2026, 10, 31);
+        expect(service.getUsedMonthlyQuota(now: octDate), equals(5));
+        expect(service.getRemainingMonthlyQuota(now: octDate), equals(0));
+
+        // Nov 1st 2026: Month advances!
+        final novDate = DateTime(2026, 11, 1);
+        expect(service.getUsedMonthlyQuota(now: novDate), equals(0));
+        expect(service.getRemainingMonthlyQuota(now: novDate), equals(5));
+
+        // checkMonthlyQuota should not throw, it should reset storage
+        expect(() => service.checkMonthlyQuota(now: novDate), returnsNormally);
+        expect(prefs.getString(GeminiService.keyAiQuotaMonth), equals('2026-11'));
+        expect(prefs.getInt(GeminiService.keyAiQuotaUsed), equals(0));
+
+        // User can make new requests in November
+        await service.recordSuccessfulRequest(now: novDate);
+        expect(service.getUsedMonthlyQuota(now: novDate), equals(1));
+        expect(service.getRemainingMonthlyQuota(now: novDate), equals(4));
+      });
     });
   });
 }

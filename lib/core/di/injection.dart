@@ -32,7 +32,9 @@ Future<void> setupDependencies() async {
   sl.registerSingleton<AppDatabase>(database);
   sl.registerLazySingleton<ShakeService>(() => ShakeService());
   sl.registerLazySingleton<BiometricService>(() => BiometricService());
-  sl.registerLazySingleton<GeminiService>(() => GeminiService());
+  sl.registerLazySingleton<GeminiService>(
+    () => GeminiService(prefs: sl<SharedPreferences>()),
+  );
   sl.registerLazySingleton<SpeechService>(() => SpeechService());
   sl.registerLazySingleton<AudioRecordService>(() => AudioRecordService());
   sl.registerLazySingleton<NotificationService>(() => NotificationService());

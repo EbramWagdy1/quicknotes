@@ -280,6 +280,28 @@ class _AiSummarySheetState extends State<AiSummarySheet> {
                                     color: isDark ? AppTheme.darkSkyBlue : AppColors.skyBlue,
                                   ),
                                 ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? const Color(0xFF1E293B) : AppColors.slate100,
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: isDark ? const Color(0xFF334155) : AppColors.borderSubtle,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    context.isArabic
+                                        ? 'متبقي: ${_geminiService.getRemainingMonthlyQuota()}/${_geminiService.monthlyQuota}'
+                                        : '${_geminiService.getRemainingMonthlyQuota()}/${_geminiService.monthlyQuota} left',
+                                    style: TextStyle(
+                                      fontFamily: AppTextStyle.fontFamily,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark ? AppColors.slate300 : AppColors.slate600,
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ],
@@ -410,8 +432,8 @@ class _AiSummarySheetState extends State<AiSummarySheet> {
             const SizedBox(height: 18),
             Text(
               context.isArabic
-                  ? 'جارٍ استخلاص أهم النقاط بواسطة Gemini...'
-                  : 'Distilling key takeaways with Gemini...',
+                  ? 'جارٍ استخلاص أهم النقاط بواسطة الذكاء الاصطناعي...'
+                  : 'Distilling key takeaways with AI...',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: AppTextStyle.fontFamily,
