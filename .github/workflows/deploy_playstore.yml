@@ -52,10 +52,10 @@ jobs:
           EOF
 
       - name: Build Android App Bundle (.aab)
-        run: |
-          flutter build appbundle --release \
-            --dart-define=GROQ_API_KEY="${{ secrets.GROQ_API_KEY || secrets.GEMINI_API_KEY }}" \
-            --dart-define=GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"
+        env:
+          GROQ_KEY: ${{ secrets.GROQ_API_KEY || secrets.GEMINI_API_KEY }}
+          GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: flutter build appbundle --release --dart-define=GROQ_API_KEY="$GROQ_KEY" --dart-define=GEMINI_API_KEY="$GEMINI_KEY"
 
       - name: Upload AAB Artifact
         uses: actions/upload-artifact@v4
