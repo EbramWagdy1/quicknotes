@@ -1,0 +1,128 @@
+{
+  "@@locale": "en",
+  "appName": "Quick Notes",
+  "myNotes": "My Notes",
+  "activeNotesCount": "{count, plural, =0{No active notes} =1{1 active note} other{{count} active notes}}",
+  "@activeNotesCount": {
+    "description": "Number of active notes",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "searchPlaceholder": "Search notes by title or content...",
+  "pinnedSection": "PINNED",
+  "allNotesSection": "ALL NOTES",
+  "newNote": "New Note",
+  "favoritesOnly": "Favorites only",
+  "showAllNotes": "Show all notes",
+  "notesMap": "Notes Map",
+  "calendar": "Calendar",
+  "productivityInsights": "Productivity & Insights",
+  "deleteAllNotes": "Delete all notes",
+  "deleteAllNotesTitle": "Delete All Notes?",
+  "deleteAllNotesMessage": "This will permanently delete all your notes. This action cannot be undone.",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "deleteNote": "Delete Note",
+  "undo": "Undo",
+  "noteDeleted": "Note deleted",
+  "noteTitleDeleted": "Note \"{title}\" deleted",
+  "@noteTitleDeleted": {
+    "description": "Message when a titled note is deleted",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Meeting"
+      }
+    }
+  },
+  "allNotesDeleted": "All notes deleted",
+  "emptyNotesTitle": "No notes yet",
+  "emptyNotesSubtitle": "Capture your thoughts, ideas, checklists and voice notes anytime",
+  "createFirstNote": "Create First Note",
+  "noSearchResults": "No notes found",
+  "noSearchResultsSubtitle": "No notes match \"{query}\". Try a different keyword.",
+  "@noSearchResultsSubtitle": {
+    "description": "Message when search finds no matches",
+    "placeholders": {
+      "query": {
+        "type": "String",
+        "example": "project"
+      }
+    }
+  },
+  "clearSearch": "Clear search",
+  "summarizeWithAi": "Summarize with AI",
+  "shareNote": "Share Note",
+  "addToFavorites": "Add to Favorites",
+  "removeFromFavorites": "Remove from Favorites",
+  "pinNote": "Pin Note to Top",
+  "unpinNote": "Unpin Note",
+  "cancelReminder": "Cancel Reminder",
+  "switchToLightMode": "Switch to light mode",
+  "switchToDarkMode": "Switch to dark mode",
+  "switchLanguage": "Switch Language",
+  "textNote": "Text Note",
+  "checklist": "Tasks Checklist",
+  "noteTitleHint": "Title",
+  "noteBodyHint": "Write your note...",
+  "save": "Save",
+  "editNote": "Edit Note",
+  "addNote": "New Note",
+  "lockNote": "Lock Note",
+  "unlockNote": "Unlock Note",
+  "reminder": "Reminder",
+  "location": "Location",
+  "tags": "Tags",
+  "addTag": "Add tag",
+  "subtasks": "Tasks",
+  "addSubtask": "Add task",
+  "speechToText": "Voice Notes",
+  "voiceLanguage": "Voice Language",
+  "authRequiredLocked": "Authentication required to view locked note",
+  "authRequiredDeleteLocked": "Authentication required to delete locked note",
+  "locked": "Locked",
+  "lockedContentPlaceholder": "Locked content • Authenticate to view",
+  "viewMap": "View Map",
+  "tag": "Tag",
+  "aiTags": "AI Tags",
+  "checklistAndSubtasks": "Checklist & Sub-tasks",
+  "addSubtaskHint": "Add a sub-task...",
+  "productivitySubtitle": "Overview of your notes, tasks, and tags",
+  "tasksCompletion": "Tasks Completion",
+  "noChecklistTasksYet": "No checklist tasks added yet",
+  "activeNotes": "Active Notes",
+  "reminders": "Reminders",
+  "favoritesAndPinned": "Favorites / Pinned",
+  "inTrash": "In Trash",
+  "topTags": "Top Tags",
+  "trash": "Trash",
+  "emptyTrash": "Empty Trash",
+  "trashIsEmpty": "Trash is Empty",
+  "trashEmptySubtitle": "Deleted notes will stay here until you restore or permanently delete them.",
+  "restore": "Restore",
+  "deleteForever": "Delete Forever",
+  "notesCalendar": "Notes Calendar",
+  "today": "Today",
+  "remindersOnly": "Reminders Only",
+  "all": "All",
+  "alarmClock": "Alarm Clock",
+  "inProgress": "In Progress",
+  "postpone": "Postpone",
+  "dismissAlarm": "Dismiss",
+  "snooze10Min": "Snooze 10m",
+  "snoozedSuccessfully": "Alarm postponed to {time}",
+  "@snoozedSuccessfully": {
+    "description": "Feedback message when alarm is snoozed",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "10:30 AM"
+      }
+    }
+  }
+}
+

@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "quicknotes (Debug)",
+      "request": "launch",
+      "type": "dart",
+      "toolArgs": [
+        "--no-enable-impeller"
+      ]
+    },
+    {
+      "name": "quicknotes (Release)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "release",
+      "toolArgs": [
+        "--no-enable-impeller"
+      ]
+    }
+  ]
+}
