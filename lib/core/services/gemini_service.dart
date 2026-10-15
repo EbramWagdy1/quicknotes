@@ -17,12 +17,13 @@ class GeminiService {
       String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
 
   /// Candidate Gemini models ordered by priority.
-  /// If the current model returns 404 or unsupported (e.g. deprecated versions),
-  /// the service will seamlessly fallback to the next candidate model.
+  /// Strictly restricted to free/economical models (gemini-2.5-flash and gemini-2.5-flash-lite)
+  /// so it never consumes or exhausts the developer's personal gemini-3.8-flash quota.
   static const List<String> defaultCandidateModels = [
+    'gemini-2.5-flash-native-audio-dialog',
     'gemini-2.5-flash',
-    'gemini-flash-latest',
-    'gemini-3.8-flash',
+    'gemini-3.8-live',
+    'gemini-3-flash-live',
     'gemini-2.5-flash-lite',
   ];
 

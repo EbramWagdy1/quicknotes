@@ -54,9 +54,8 @@ void main() {
       final service = GeminiService(apiKey: 'dummy_key');
       expect(service.activeModelName, 'gemini-2.5-flash');
       expect(GeminiService.defaultCandidateModels, contains('gemini-2.5-flash'));
-      expect(GeminiService.defaultCandidateModels, contains('gemini-flash-latest'));
-      expect(GeminiService.defaultCandidateModels, contains('gemini-3.8-flash'));
       expect(GeminiService.defaultCandidateModels, contains('gemini-2.5-flash-lite'));
+      expect(GeminiService.defaultCandidateModels, isNot(contains('gemini-3.8-flash')));
     });
 
     test('respects custom candidate models and custom initial model', () {
