@@ -519,13 +519,12 @@ class _NoteFormScreenState extends State<NoteFormScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final friendlyMsg = GeminiService.getUserFriendlyError(e, isArabic: context.isArabic);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             behavior: SnackBarBehavior.floating,
             backgroundColor: AppColors.error,
-            content: Text(
-              context.isArabic ? 'فشل استخراج المهام: $e' : 'Failed to extract tasks: $e',
-            ),
+            content: Text(friendlyMsg),
           ),
         );
       }
@@ -678,9 +677,8 @@ class _NoteFormScreenState extends State<NoteFormScreen> {
                       }
                     } catch (e) {
                       if (mounted) {
-                        _showError(
-                          context.isArabic ? 'فشل اقتراح الوسوم: $e' : 'Failed to suggest tags: $e',
-                        );
+                        final friendlyMsg = GeminiService.getUserFriendlyError(e, isArabic: context.isArabic);
+                        _showError(friendlyMsg);
                       }
                     }
                   },
@@ -945,7 +943,8 @@ class _NoteFormScreenState extends State<NoteFormScreen> {
       );
     } catch (e) {
       if (mounted) {
-        _showError(context.isArabic ? 'فشل مسح الصورة: $e' : 'Failed to scan image: $e');
+        final friendlyMsg = GeminiService.getUserFriendlyError(e, isArabic: context.isArabic);
+        _showError(friendlyMsg);
       }
     } finally {
       if (mounted) setState(() => _isScanningOcr = false);

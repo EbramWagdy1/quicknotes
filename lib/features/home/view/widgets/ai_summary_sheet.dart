@@ -81,7 +81,7 @@ class _AiSummarySheetState extends State<AiSummarySheet> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString();
+          _errorMessage = GeminiService.getUserFriendlyError(e, isArabic: context.isArabic);
           _isLoading = false;
         });
       }
@@ -271,8 +271,8 @@ class _AiSummarySheetState extends State<AiSummarySheet> {
                               children: [
                                 Text(
                                   context.isArabic
-                                      ? 'مدعوم بواسطة Gemini 1.5 Flash'
-                                      : 'Powered by Gemini 1.5 Flash',
+                                      ? 'مدعوم بواسطة Google Gemini AI'
+                                      : 'Powered by Google Gemini AI',
                                   style: TextStyle(
                                     fontFamily: AppTextStyle.fontFamily,
                                     fontSize: 12,
